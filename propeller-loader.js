@@ -105,6 +105,21 @@ function sendlong(data) {
     // TODO: We may need the delayed byte writes here.
 }
 
+
+function upload(buffer, type) {
+    var n;
+
+    // Send type
+    sendlong(type);
+
+    // Send count
+    sendlong(buffer.length / 4);
+
+    for (n = 0; n < buffer.length; n += 4) {
+        sendlong(buffer[n] | (buffer[n + 1] << 8) | (buffer[n + 2] << 16) | (buffer[n + 3] << 24));
+    }
+}
+
 sp.on("open", function () {
     console.log('open');
 
