@@ -1,6 +1,8 @@
 propeller-loader.js is a program loader for the Parallax Inc. Propeller 32 bit
 multi-core micro-controller.
 
+Status: JUST STARTING NOT FUNCTIONAL YET.
+
 Programming a Propeller requires a serial connection so this loader is only usable
 from node.js or from within a Chrome App. 
 
