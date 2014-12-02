@@ -87,6 +87,24 @@ function hwFind(callback) {
     });
 }
 
+function makelong(data) {
+    var buffer = new ArrayBuffer(11),
+        buff = new Int8Array(buffer),
+        n;
+
+    for (n = 0; n < 10; n += 1) {
+        buff[n] = (0x92 | (data & 1) | ((data & 2) << 2) | ((data & 4) << 4));
+        data >>= 3;
+    }
+    buff[n] = (0xf2 | (data & 1) | ((data & 2) << 2));
+    return buff;
+}
+
+function sendlong(data) {
+    sp.write(makelong(data));
+    // TODO: We may need the delayed byte writes here.
+}
+
 sp.on("open", function () {
     console.log('open');
 
