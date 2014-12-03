@@ -1,5 +1,11 @@
 "use strict";
 
+/*global Int8Array:   false,
+         Array:       false,
+         ArrayBuffer: false
+*/
+
+
 var SerialPort = require("serialport").SerialPort;
 
 var sp = new SerialPort("/dev/ttyUSB1", {
@@ -28,8 +34,10 @@ function concat(a, b) {
 var LFSR;
 
 function iterateLfsr() {
+    /*jslint bitwise: true */
     var bit = LFSR & 1;
     LFSR = ((LFSR << 1) | (((LFSR >> 7) ^ (LFSR >> 5) ^ (LFSR >> 4) ^ (LFSR >> 1)) & 1)) & 0xff;
+    /*jslint bitwise: false */
     return bit;
 }
 
@@ -42,7 +50,9 @@ function createMagicLsfrBuffer() {
     int8View[0] = 0xF9;
 
     for (n = 1; n < 251; n += 1) {
+        /*jslint bitwise: true */
         int8View[n] = iterateLfsr() | 0xfe;
+        /*jslint bitwise: false */
     }
     return int8View;
 }
@@ -92,11 +102,13 @@ function makelong(data) {
         buff = new Int8Array(buffer),
         n;
 
+    /*jslint bitwise: true */
     for (n = 0; n < 10; n += 1) {
         buff[n] = (0x92 | (data & 1) | ((data & 2) << 2) | ((data & 4) << 4));
         data >>= 3;
     }
     buff[n] = (0xf2 | (data & 1) | ((data & 2) << 2));
+    /*jslint bitwise: false */
     return buff;
 }
 
@@ -116,7 +128,9 @@ function upload(buffer, type) {
     sendlong(buffer.length / 4);
 
     for (n = 0; n < buffer.length; n += 4) {
+        /*jslint bitwise: true */
         sendlong(buffer[n] | (buffer[n + 1] << 8) | (buffer[n + 2] << 16) | (buffer[n + 3] << 24));
+        /*jslint bitwise: false */
     }
 }
 
@@ -127,8 +141,8 @@ sp.on("open", function () {
         concat(inBuffer, data);
         if (inBuffer.length >= readLength) {
             if (readCallBack) {
-                var outBuffer = new Int8Array (inBuffer.subarray(0, readLength));
-                inBuffer = new Int8Array (inBuffer.subarray(readLength));
+                var outBuffer = new Int8Array(inBuffer.subarray(0, readLength));
+                inBuffer = new Int8Array(inBuffer.subarray(readLength));
                 readCallBack(null, outBuffer);
             }
         }
