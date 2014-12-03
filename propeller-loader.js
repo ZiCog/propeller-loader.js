@@ -8,7 +8,7 @@
 
 var SerialPort = require("serialport").SerialPort;
 
-var sp = new SerialPort("/dev/ttyUSB1", {
+var sp = new SerialPort("/dev/ttyUSB0", {
     baudrate: 115200
 });
 
@@ -69,10 +69,12 @@ function createF9Buffer() {
 }
 
 function hwFind(callback) {
-    LFSR = 'P';  // P is for Propeller :)
+    LFSR = 0x50;   // 'P' is for Propeller :)
 
     // Send the magic propeller LFSR byte stream.
-    sp.write(createMagicLsfrBuffer());
+    var b = createMagicLsfrBuffer();
+    //console.log(b);
+    sp.write(b);
 
     sp.flush(function () {});
     // TODO: Also empty inBuffer.
@@ -148,28 +150,28 @@ sp.on("open", function () {
         }
     });
 
-    hwFind();
+    hwFind(function(err) {
+        console.log("Duh!", err);
+    });
 });
 
-function onTimeOut() {
-    readCallBack("Serial time out", null);
-}
 
 sp.read = function (length, timeOut, callBack) {
+    readCallBack = callBack;
     if (inBuffer.length >= length) {
         // We have data better return it through callback on next tick
         setTimeout(function () {
             var outBuffer = new Int8Array(inBuffer.subarray(0, length));
             inBuffer = new Int8Array(inBuffer.subarray(length));
-            callBack(null, outBuffer);
+            readCallBack(null, outBuffer);
         }, 1);
     } else {
         // No enough data yet
-        readCallBack = callBack;
-        readTimeout = setTimeout(onTimeOut, timeOut);
+        readTimeout = setTimeout(function () {
+            readCallBack("Serial time out");
+        }, 5000);
     }
 };
-
 
 function readTest() {
     sp.read(1, 1000, function (err, data) {
