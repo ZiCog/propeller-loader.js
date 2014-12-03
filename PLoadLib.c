@@ -272,9 +272,9 @@ static int pupload(const char* file, const uint8_t* dlbuf, int count, int type)
     int version = 0;
     hwreset();
     version = hwfind(1); // retry once
-    if(version) {
+//    if(version) {
         rc = upload(file, dlbuf, count, type);
-    }
+//    }
     return rc;
 }
 
@@ -298,6 +298,8 @@ static int upload(const char* file, const uint8_t* dlbuf, int count, int type)
     uint8_t buf[1];
 
     int  longcount = count/4;
+
+    printf("************************ LOADING *****************************\n");
 
     // send type
     if(sendlong(type) == 0) {
@@ -479,7 +481,7 @@ int popenport(const char* port, int baud, int noreset)
     //
     if (findprop(port) != 0) {
         printf("Error: No propeller found\n");
-        serial_done();
+//        serial_done();
         return PLOAD_STATUS_NO_PROPELLER;
     }
 
@@ -513,13 +515,14 @@ int pload(const char* file, int type)
         count = (int)fread(dlbuf, 1, 0x8000, fp);
         if (pload_verbose)
             if((type != 0) && (type < DOWNLOAD_SHUTDOWN))
-                printf("Downloading %d bytes of '%s'\n", count, file);
+                printf(" 2 Downloading %d bytes of '%s'\n", count, file);
         fclose(fp);
     }
 
     // if found and file, upload file
     //
     if(file) {
+        printf ("************** 1\n");
         rc = pupload(file, dlbuf, count, type);
     }
 
@@ -540,7 +543,7 @@ int ploadfp(const char* file, FILE *fp, int type)
     //
     count = (int)fread(dlbuf, 1, 0x8000, fp);
     if (pload_verbose)
-        printf("Downloading %d bytes of '%s'\n", count, file);
+        printf(" 1 Downloading %d bytes of '%s'\n", count, file);
 
     // if found and file, upload file
     //
@@ -580,7 +583,7 @@ int main(int argc, char *argv[])
     }
     if (popenport(argv[1], 115200, PLOAD_RESET_DEVICE)) {
         printf("Error opening port\n");
-        return 1;
+//        return 1;
     }
     if (pload(argv[2], operation) != 0) {
         printf("Load failed\n");
