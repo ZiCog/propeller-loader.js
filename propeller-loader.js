@@ -5,18 +5,23 @@
          ArrayBuffer: false
 */
 
+var propeller = require("./propeller");
+var prop = new propeller.Propeller();
 
-var SerialPort = require("serialport").SerialPort;
-
-var sp = new SerialPort("/dev/ttyUSB0", {
-    baudrate: 115200
+prop.open(function (error) {
+    if (error) {
+        console.log("Failed to open propeller port.");
+    } else {
+//        hwFind(function (err, data) {
+        readTest(function (err, data) {
+            if (err) {
+                console.log("No propeller found.");
+            } else {
+                console.log("Propeller found:", data);
+            }
+        });
+    }
 });
-
-var inBuffer = new Int8Array([]);
-
-var readCallBack;
-var readLength;
-var readTimeout;
 
 function concat(a, b) {
     var c = new Array(),
@@ -29,7 +34,6 @@ function concat(a, b) {
     }
     return new Int8Array(c);
 }
-
 
 var LFSR;
 
@@ -72,19 +76,16 @@ function hwFind(callback) {
     LFSR = 0x50;   // 'P' is for Propeller :)
 
     // Send the magic propeller LFSR byte stream.
-    var b = createMagicLsfrBuffer();
-    //console.log(b);
-    sp.write(b);
+    prop.write(createMagicLsfrBuffer());
 
-    sp.flush(function () {});
-    // TODO: Also empty inBuffer.
-
+    prop.flush(function () {});
+    
     // Send 258 0xF9 bytes for LFSR and Version ID
     // These bytes clock the LSFR bits and ID from propeller back to us.
-    sp.write(createF9Buffer());
+    prop.write(createF9Buffer());
 
     console.log("Reading Propeller response...");
-    sp.read(258, 5000, function (err, data) {
+    prop.read(258, 5000, function (err, data) {
         var ii;
         if (err) {
             console.log("Timeout/error waiting for response. Propeller not found");
@@ -115,10 +116,9 @@ function makelong(data) {
 }
 
 function sendlong(data) {
-    sp.write(makelong(data));
+    prop.write(makelong(data));
     // TODO: We may need the delayed byte writes here.
 }
-
 
 function upload(buffer, type) {
     var n;
@@ -136,52 +136,17 @@ function upload(buffer, type) {
     }
 }
 
-sp.on("open", function () {
-    console.log('open');
-
-    sp.on('data', function (data) {
-        concat(inBuffer, data);
-        if (inBuffer.length >= readLength) {
-            if (readCallBack) {
-                var outBuffer = new Int8Array(inBuffer.subarray(0, readLength));
-                inBuffer = new Int8Array(inBuffer.subarray(readLength));
-                readCallBack(null, outBuffer);
-            }
-        }
-    });
-
-    hwFind(function(err) {
-        console.log("Duh!", err);
-    });
-});
-
-
-sp.read = function (length, timeOut, callBack) {
-    readCallBack = callBack;
-    if (inBuffer.length >= length) {
-        // We have data better return it through callback on next tick
-        setTimeout(function () {
-            var outBuffer = new Int8Array(inBuffer.subarray(0, length));
-            inBuffer = new Int8Array(inBuffer.subarray(length));
-            readCallBack(null, outBuffer);
-        }, 1);
-    } else {
-        // No enough data yet
-        readTimeout = setTimeout(function () {
-            readCallBack("Serial time out");
-        }, 5000);
-    }
-};
-
 function readTest() {
-    sp.read(1, 1000, function (err, data) {
-        console.log("Got err  = ", err);
-        console.log("Got data = ", data);
-        readTest();
+    prop.read(1, 1000, function (err, data) {
+        if (err) {
+            console.log("Got err  = ", err);
+        } else {
+            console.log("Got data = ", data);
+            readTest();
+        }
     });
 }
 
-//readTest();
 
 
 
