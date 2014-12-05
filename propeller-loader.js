@@ -12,8 +12,8 @@ prop.open(function (error) {
     if (error) {
         console.log("Failed to open propeller port.");
     } else {
-//        hwFind(function (err, data) {
-        readTest(function (err, data) {
+        hwFind(function (err, data) {
+//        readTest(function (err, data) {
             if (err) {
                 console.log("No propeller found.");
             } else {
