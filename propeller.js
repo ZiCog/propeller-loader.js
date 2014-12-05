@@ -28,7 +28,7 @@ function Propeller() {
         readLength = 0,
         readTimeout;
 
-    var sp = new SerialPort("/dev/ttyUSB1", {
+    var sp = new SerialPort("/dev/ttyUSB0", {
 
         baudrate: 115200
     }, false);
