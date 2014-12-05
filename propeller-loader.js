@@ -23,18 +23,6 @@ prop.open(function (error) {
     }
 });
 
-function concat(a, b) {
-    var c = new Array(),
-        i;
-    for (i = 0; i < a.length; i += 1) {
-        c.push(a[i]);
-    }
-    for (i = 0; i < b.length; i += 1) {
-        c.push(b[i]);
-    }
-    return new Int8Array(c);
-}
-
 var LFSR;
 
 function iterateLfsr() {
@@ -140,6 +128,7 @@ function readTest() {
     prop.read(1, 1000, function (err, data) {
         if (err) {
             console.log("Got err  = ", err);
+            prop.close();
         } else {
             console.log("Got data = ", data);
             readTest();

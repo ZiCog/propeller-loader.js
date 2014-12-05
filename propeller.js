@@ -8,13 +8,27 @@
 
 var SerialPort = require("serialport").SerialPort;
 
+// TODO: We should not need this
+function concat(a, b) {
+    var c = new Array(),
+        i;
+    for (i = 0; i < a.length; i += 1) {
+        c.push(a[i]);
+    }
+    for (i = 0; i < b.length; i += 1) {
+        c.push(b[i]);
+    }
+    return new Int8Array(c);
+}
+
 function Propeller() {
-    var inBuffer = new Int8Array([0, 1, 2, 3, 4]),
+    var inBuffer = new Int8Array([]),
         readCallBack,
         readLength = 0,
         readTimeout;
 
-    var sp = new SerialPort("/dev/ttyUSB0", {
+    var sp = new SerialPort("/dev/ttyUSB1", {
+
         baudrate: 115200
     }, false);
 
@@ -41,6 +55,10 @@ function Propeller() {
             }
         });
     };
+
+    this.close = function () {
+        sp.close();
+    }
 
     this.write = function (buffer) {
         console.log(buffer);
@@ -71,3 +89,5 @@ function Propeller() {
 }
 
 exports.Propeller = Propeller;
+
+
