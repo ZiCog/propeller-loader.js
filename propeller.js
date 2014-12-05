@@ -63,7 +63,7 @@ function Propeller() {
 
     this.write = function (buffer) {
         console.log("**");
-        console.log(hexy.hexy(new Buffer(buffer), {format : "twos"}));
+        console.log(hexy.hexy(new Buffer(buffer), {format : "twos", caps: "upper", annotate: "none"}));
         sp.write(buffer);
     };
 
