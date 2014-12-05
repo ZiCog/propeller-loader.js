@@ -7,6 +7,7 @@
 
 
 var SerialPort = require("serialport").SerialPort;
+var hexy = require('hexy');
 
 // TODO: We should not need this
 function concat(a, b) {
@@ -58,10 +59,11 @@ function Propeller() {
 
     this.close = function () {
         sp.close();
-    }
+    };
 
     this.write = function (buffer) {
-        console.log(buffer);
+        console.log("**");
+        console.log(hexy.hexy(new Buffer(buffer), {format : "twos"}));
         sp.write(buffer);
     };
 
