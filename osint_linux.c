@@ -284,22 +284,24 @@ int rx(uint8_t* buff, int n)
 int tx(uint8_t* buff, int n)
 {
     ssize_t bytes;
-    static int txno = 0;
 //#if 0
-    int j = 0;
-    
-    printf("{\"txno\" : %d,\n", txno++);
-    printf(" \"length\" : %d, \n", n);
-    printf(" \"buffer\" : [\n    "); 
-    while(j < n) {
-        printf("%d, ",buff[j]);
-        j++;
-        if ((j % 16) == 0)
+    static int txno = 0;
+    int count;
+
+    for (count = 0; count < n; count++)
+    {
+        if ((count % 16) == 0)
         {
-            printf ("\n    ");
+            if (count != 0)
+            {
+                printf("\n");
+            }
+            printf("%08x:", count);
         }
-    }
-    printf("\n ]\n}\n");
+        printf(" %2x", buff[count]);
+    } 
+    printf("\n");
+
 //#endif
     bytes = write(hSerial, buff, n);
     if(bytes != n) {

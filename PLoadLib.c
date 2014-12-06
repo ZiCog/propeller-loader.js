@@ -302,13 +302,16 @@ static int upload(const char* file, const uint8_t* dlbuf, int count, int type)
     printf("************************ LOADING *****************************\n");
 
     // send type
+    printf("sendlong: type: %d\n", type);
     if(sendlong(type) == 0) {
+ 
         if (pload_verbose)
             printf("sendlong type failed\n");
         return 1;
     }
 
     // send count
+    printf("sendlong: longcount: %d\n", longcount);
     if(sendlong(longcount) == 0) {
         if (pload_verbose)
             printf("sendlong count failed\n");
@@ -364,6 +367,7 @@ static int upload(const char* file, const uint8_t* dlbuf, int count, int type)
     }
     for(n = 0; n < wv; n++) {
         if(tx(buf, 1) == 0) return 1;
+        printf("Waiting on ack\n");
         rc = getAck(&ack, 20);
         if(ack) break;
     }

@@ -6,7 +6,16 @@
 */
 
 var propeller = require("./propeller");
-var prop = new propeller.Propeller();
+
+var prop = new propeller.Propeller({
+    port:     "/dev/ttyUSB0",
+    baudrate: "115200"
+});
+
+var testBinary = new Buffer([
+    0x00, 0x1b, 0xb7, 0x00, 0x00, 0xe8, 0x10, 0x00, 0x1c, 0x00, 0x24, 0x00, 0x18, 0x00, 0x28, 0x00,
+    0x0c, 0x00, 0x02, 0x00, 0x08, 0x00, 0x00, 0x00, 0x04, 0x7e, 0x32, 0x00
+]);
 
 prop.open(function (error) {
     if (error) {
@@ -19,6 +28,8 @@ prop.open(function (error) {
             } else {
                 console.log("Propeller found:", data);
             }
+            console.log("************************ LOADING *****************************");
+            upload(testBinary, 1);
         });
     }
 });
@@ -33,44 +44,51 @@ function iterateLfsr() {
     return bit;
 }
 
-function createMagicLsfrBuffer() {
-    var buffer = new ArrayBuffer(251),
-        int8View = new Int8Array(buffer),
-        n;
 
-    // First byte is calibration pulse
-    int8View[0] = 0xF9;
-
-    for (n = 1; n < 251; n += 1) {
-        /*jslint bitwise: true */
-        int8View[n] = iterateLfsr() | 0xfe;
-        /*jslint bitwise: false */
-    }
-    return int8View;
+function writeByte(byte) {
+    var buffer = new ArrayBuffer(1),
+        bytes = new Int8Array(buffer);
+    bytes[0] = byte;
+    prop.write(bytes);
 }
 
-function createF9Buffer() {
+function writeMagicLsfr() {
+    var buffer = new ArrayBuffer(250),
+        bytes = new Int8Array(buffer),
+        n;
+    for (n = 0; n < 250; n += 1) {
+        /*jslint bitwise: true */
+        bytes[n] = iterateLfsr() | 0xfe;
+        /*jslint bitwise: false */
+    }
+    prop.write(bytes);
+}
+
+function writeF9s() {
     var buffer = new ArrayBuffer(258),
-        int8View = new Int8Array(buffer),
+        bytes = new Int8Array(buffer),
         n;
 
     for (n = 0; n < 258; n += 1) {
-        int8View[n] = 0xF9;
+        bytes[n] = 0xF9;
     }
-    return int8View;
+    prop.write(bytes);
 }
 
 function hwFind(callback) {
     LFSR = 0x50;   // 'P' is for Propeller :)
 
+    // First byte is calibration pulse
+    writeByte(0xf9);
+
     // Send the magic propeller LFSR byte stream.
-    prop.write(createMagicLsfrBuffer());
+    writeMagicLsfr();
 
     prop.flush(function () {});
-    
+
     // Send 258 0xF9 bytes for LFSR and Version ID
     // These bytes clock the LSFR bits and ID from propeller back to us.
-    prop.write(createF9Buffer());
+    writeF9s();
 
     console.log("Reading Propeller response...");
     prop.read(258, 5000, function (err, data) {
@@ -88,40 +106,79 @@ function hwFind(callback) {
     });
 }
 
-function makelong(data) {
+function writeLong(long) {
     var buffer = new ArrayBuffer(11),
         buff = new Int8Array(buffer),
         n;
 
     /*jslint bitwise: true */
     for (n = 0; n < 10; n += 1) {
-        buff[n] = (0x92 | (data & 1) | ((data & 2) << 2) | ((data & 4) << 4));
-        data >>= 3;
+        buff[n] = (0x92 | (long & 1) | ((long & 2) << 2) | ((long & 4) << 4));
+        long >>= 3;
     }
-    buff[n] = (0xf2 | (data & 1) | ((data & 2) << 2));
+    buff[n] = (0xf2 | (long & 1) | ((long & 2) << 2));
     /*jslint bitwise: false */
-    return buff;
-}
-
-function sendlong(data) {
-    prop.write(makelong(data));
+    prop.write(buff);
     // TODO: We may need the delayed byte writes here.
 }
 
+function getAck(callback) {
+    var retryCount = 100;
+    (function requestAck() {
+        // Need to send this to make Propeller send the ack
+        writeByte(0xF9);
+        console.log("Waiting on ack...");
+        retryCount -= 1;
+        prop.read(1, 20, function (err, data) {
+            if (err) {
+                if (retryCount) {
+                    requestAck(callback);
+                } else {
+                    callback("No ack.");
+                }
+            } else {
+                /*jslint bitwise: true */
+                if ((data[0] & 1) === 0) {
+                    if (retryCount) {
+                        requestAck(callback);
+                    }
+                } else {
+                    callback(null);
+                }
+                /*jslint bitwise: false */
+            }
+        });
+    }());
+}
+
 function upload(buffer, type) {
-    var n;
+    var bytes = new Int8Array(buffer),
+        n;
 
     // Send type
-    sendlong(type);
+    console.log("sendlong: type:", type);
+    writeLong(type);
 
     // Send count
-    sendlong(buffer.length / 4);
+    console.log("sendlong: longcount:", bytes.length / 4);
+    writeLong(bytes.length / 4);
 
     for (n = 0; n < buffer.length; n += 4) {
         /*jslint bitwise: true */
-        sendlong(buffer[n] | (buffer[n + 1] << 8) | (buffer[n + 2] << 16) | (buffer[n + 3] << 24));
+        writeLong(buffer[n] | (buffer[n + 1] << 8) | (buffer[n + 2] << 16) | (buffer[n + 3] << 24));
         /*jslint bitwise: false */
     }
+
+    // Give propeller time to calculate checksum match 32K/12M sec = 32ms
+    setTimeout(function () {
+        getAck(function (err) {
+            if (err) {
+                console.log("Ack failed");
+            } else {
+                console.log("Ack OK");
+            }
+        });
+    }, 50);
 }
 
 function readTest() {
@@ -130,7 +187,7 @@ function readTest() {
             console.log("Got err  = ", err);
             prop.close();
         } else {
-            console.log("Got data = ", data);
+            console.log("Got data = ", data[0]);
             readTest();
         }
     });

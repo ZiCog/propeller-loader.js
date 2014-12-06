@@ -22,17 +22,13 @@ function concat(a, b) {
     return new Int8Array(c);
 }
 
-function Propeller() {
+function Propeller(options) {
+//    var inBuffer = new Int8Array([0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10, 0x11, 0x12 ]),
     var inBuffer = new Int8Array([]),
         readCallBack,
         readLength = 0,
-        readTimeout;
-
-    var sp = new SerialPort("/dev/ttyUSB0", {
-
-        baudrate: 115200
-    }, false);
-
+        readTimeout,
+        sp = new SerialPort(options.port, options, false);
 
     this.open = function (openCallback) {
         sp.open(function (error) {
@@ -62,8 +58,7 @@ function Propeller() {
     };
 
     this.write = function (buffer) {
-        console.log("**");
-        console.log(hexy.hexy(new Buffer(buffer), {format : "twos", caps: "upper", annotate: "none"}));
+        console.log(hexy.hexy(new Buffer(buffer), {format : "twos", caps: "lower", annotate: "none"}));
         sp.write(buffer);
     };
 
