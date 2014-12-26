@@ -7,6 +7,7 @@
 
 
 var SerialPort = require("serialport").SerialPort;
+var Gpio = require('onoff').Gpio;
 var hexy = require('hexy');
 
 // TODO: We should not need this
@@ -28,7 +29,8 @@ function Propeller(options) {
         readCallBack,
         readLength = 0,
         readTimeout,
-        sp = new SerialPort(options.port, options, false);
+        sp = new SerialPort(options.port, options, false),
+        rst = new Gpio(options.resetPin, 'out');
 
     this.open = function (openCallback) {
         sp.open(function (error) {
@@ -83,6 +85,17 @@ function Propeller(options) {
         sp.flush(callback);
         // TODO: Also empty inBuffer.
     };
+
+    this.reset = function (callback) {
+        rst.write (1);
+        setTimeout(function () {
+            rst.write(0);
+            setTimeout(function () {
+                sp.flush(callback);
+                // TODO: Also empty inBuffer.
+            }, 90);
+        }, 10);
+    }
 }
 
 exports.Propeller = Propeller;

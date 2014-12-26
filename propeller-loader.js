@@ -8,8 +8,10 @@
 var propeller = require("./propeller");
 
 var prop = new propeller.Propeller({
-    port:     "/dev/ttyUSB0",
-    baudrate: "115200"
+//    port:     "/dev/ttyUSB0",
+    port:     "/dev/ttyS0",
+    baudrate: "115200",
+    resetPin: 17
 });
 
 var testBinary = new Buffer([
