@@ -1,0 +1,24 @@
+{
+  "name": "propeller-loader.js",
+  "version": "0.0.1",
+  "description": "Loads binaries into a Parallax Inc. Propeller MCU",
+  "main": "propeller-loader.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ZiCog/propeller-loader.js.git"
+  },
+  "author": "Heater",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ZiCog/propeller-loader.js/issues"
+  },
+  "homepage": "https://github.com/ZiCog/propeller-loader.js",
+  "dependencies": {
+    "hexy": "^0.2.7",
+    "onoff": "^0.3.2",
+    "serialport": "^1.4.9"
+  }
+}
