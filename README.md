@@ -43,6 +43,42 @@ Then reboot the Pi.
 Excuse all the debug messages.
 
 
+
+Some details:
+-------------
+
+1) The PLoadLib directory contains the orgnal C code of the loader from prop-gcc. It has been hacked around with debug printf so we can compare what it sends/receives over the serial line with any JS version we create. This loader is known to work on the Raspberry Pi and MIPS based WIFI routers.
+
+PLoadLib can be built with:
+
+$ gcc -DMAIN PLoadLib.c osint_linux.c
+
+2) propeller-loader.js - This is the JS version of the loader algorithm from PLoadLib.c Note that due to the asynchronous nature of JS this code does not look much like the original. You cannot have a loop blocking on serial port reads for example. 
+
+3) propeller.js - This is the interface to the Propeller over a serial line. It is for node.js. It also drives a GPIO pin on the Raspberry Pi GPIO header for Propeller reset.
+
+4) There is no propeller serial interface for use in Chrome yet. The idea is that a module similar to propeller.js is created to do that and dropped in to the Chrome version.
+
+5) loader.js is to be "main" for the command line version under node.js. It is not yet connected to anything else.
+
+6) crockford_objects.js - This is junk. Just playing with a way to make classes in JS.
+
+
+
+TODO:
+-----
+
+1) Hook up loader.js to propeller-loader.js for use under node.
+
+2) None of this has been tested against a real Propeller.
+
+3) Make it work !
+
+4) Create the Chrome app version.
+
+
+
+
 Credits
 -------
 
